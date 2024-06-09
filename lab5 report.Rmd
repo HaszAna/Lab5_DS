@@ -1,0 +1,306 @@
+---
+title: "Lab5"
+author: "Hasanah"
+date: "2024-06-09"
+output: html_document
+---
+
+# Check current working directory and list files
+getwd()
+setwd('C:/Users/Admin/Documents/week 4')
+list.files()
+
+# Read churn data
+churn_data <- read.csv("Churn_Train.csv", header = TRUE)
+
+# Load necessary packages (install if not already installed)
+if (!requireNamespace("tidyverse", quietly = TRUE)) {
+  install.packages("tidyverse")
+}
+if (!requireNamespace("dlookr", quietly = TRUE)) {
+  install.packages("dlookr")
+}
+if (!requireNamespace("vcd", quietly = TRUE)) {
+  install.packages("vcd")
+}
+if (!requireNamespace("cowplot", quietly = TRUE)) {
+  install.packages("cowplot")
+}
+if (!requireNamespace("mice", quietly = TRUE)) {
+  install.packages("mice")
+}
+if (!requireNamespace("missForest", quietly = TRUE)) {
+  install.packages("missForest")
+}
+if (!requireNamespace("caret", quietly = TRUE)) {
+  install.packages("caret")
+}
+
+library(tidyverse)
+library(dplyr)
+library(dlookr)
+library(vcd)
+library(ggplot2)
+library(cowplot)
+library(mice)
+library(missForest)
+library(caret)
+
+# Read the CSV file
+churn <- read.csv('Churn_Train.csv', header = TRUE)
+
+# View the dataset
+View(churn)
+# Calculate descriptive statistics
+descriptive_stats <- describe(churn)
+print(descriptive_stats)
+
+# Test for normality
+normality_test <- normality(churn)
+print(normality_test)
+
+# Visualize normality
+plot_normality(churn)
+
+# Calculate correlation coefficient
+correlation_matrix <- correlate(churn)
+print(correlation_matrix)
+
+if (!requireNamespace("corrplot", quietly = TRUE)) {
+  install.packages("corrplot")
+}
+library(corrplot)
+
+# Select numeric columns and calculate correlation matrix 
+using cor function
+numeric_columns <- churn %>%
+  select_if(is.numeric)
+
+correlation_matrix <- cor(numeric_columns, use = "complete.obs")
+print(correlation_matrix)
+# Visualize correlation matrix using corrplot
+corrplot(correlation_matrix, method = "circle")
+# Group data by Internet service
+categ <- target_by(churn, Internet.Service)
+# Analyze relationship between tenure and churn
+cat_num <- relate(categ, Tenure)
+# Summarize relationship
+summary(cat_num)
+# Visualize relationship
+plot(cat_num)
+# Check structure and column names
+str(churn)
+names(churn)
+
+# Create a data frame with product labels and prices 
+(including NA)
+df <- data.frame(Product = c('A', 'B', 'C', 'D', 'E'), Price = c(612, 447, NA, 374, 831))
+
+# Display the initial data frame
+print(df)
+# Replace NA values in 'Price' with 0
+df$Price[is.na(df$Price)] <- 0
+
+# Display the updated data frame
+print(df)
+# Replace NA values in 'Price' with the median of non-NA 
+prices
+df$Price[is.na(df$Price)] <- median(df$Price, na.rm = TRUE)
+
+# Install and load necessary packages
+install.packages('titanic')
+library(titanic)
+# Load the 'Titanic' dataset from the 'titanic' package
+data("titanic_train")
+# Summarize the 'titanic_train' data frame
+summary(titanic_train)
+
+# Histogram of the 'Age' variable
+ggplot(titanic_train, aes(Age)) +
+  geom_histogram(color = "#000000", fill = "#0099F8") +
+  ggtitle("Age Distribution") +
+  theme_classic() +
+  theme(plot.title = element_text(size = 18))
+
+# Imputation strategies for the 'Age' variable
+value_imputed <- data.frame(
+  original = titanic_train$Age,
+  imputed_zero = replace(titanic_train$Age, 
+                         is.na(titanic_train$Age), 0),
+  imputed_mean = replace(titanic_train$Age, 
+                         is.na(titanic_train$Age), mean(titanic_train$Age, na.rm = TRUE)),
+  imputed_median = replace(titanic_train$Age, 
+                           is.na(titanic_train$Age), median(titanic_train$Age, na.rm = TRUE))
+)
+
+# Visualize original and imputed distributions
+h1 <- ggplot(value_imputed, aes(x = original)) +
+  geom_histogram(fill = "#CAE", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Original distribution") +
+  theme_classic()
+h2 <- ggplot(value_imputed, aes(x = imputed_zero)) +
+  geom_histogram(fill = "#BE398D", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Zero-imputed distribution") +
+  theme_classic()
+h3 <- ggplot(value_imputed, aes(x = imputed_mean)) +
+  geom_histogram(fill = "#D49137", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Mean-imputed distribution") +
+  theme_classic()
+h4 <- ggplot(value_imputed, aes(x = imputed_median)) +
+  geom_histogram(fill = "#5C62D6", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Median-imputed distribution") +
+  theme_classic()
+plot_grid(h1, h2, h3, h4, nrow = 2, ncol = 2)
+
+# Impute missing values using the MICE package
+titanic_numeric <- titanic_train %>%
+  select(Survived, Pclass, SibSp, Parch, Age)
+
+md.pattern(titanic_numeric)
+
+mice_imputed <- data.frame(
+  original = titanic_train$Age,
+  imputed_pmm = complete(mice(titanic_numeric, method 
+                              = "pmm"))$Age,
+  imputed_cart = complete(mice(titanic_numeric, method = 
+                                 "cart"))$Age,
+  imputed_lasso = complete(mice(titanic_numeric, method 
+                                = "lasso.norm"))$Age
+)
+# Visualize MICE imputed distributions
+h1 <- ggplot(mice_imputed, aes(x = original)) +
+  geom_histogram(fill = "#6495ED", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Original distribution") +
+  theme_classic()
+h2 <- ggplot(mice_imputed, aes(x = imputed_pmm)) +
+  geom_histogram(fill = "#FFF0F5", color = "#000000", 
+                 position = "identity") +
+  ggtitle("PMM-imputed distribution") +
+  theme_classic()
+h3 <- ggplot(mice_imputed, aes(x = imputed_cart)) +
+  geom_histogram(fill = "#DEB887", color = "#000000", 
+                 position = "identity") +
+  ggtitle("CART-imputed distribution") +
+  theme_classic()
+h4 <- ggplot(mice_imputed, aes(x = imputed_lasso)) +
+  geom_histogram(fill = "#00FF00", color = "#000000", 
+                 position = "identity") +
+  ggtitle("Lasso-imputed distribution") +
+  theme_classic()
+plot_grid(h1, h2, h3, h4, nrow = 2, ncol = 2)
+
+
+# Impute missing values using the missForest package
+missForest_imputed <- data.frame(
+  original = titanic_numeric$Age,
+  imputed_missForest = 
+    missForest(titanic_numeric)$ximp$Age
+)
+
+# Visualize missForest imputed distribution
+h1 <- ggplot(missForest_imputed, aes(x = original)) +
+  geom_histogram(fill = "#DEF", color = "#000000", position 
+                 = "identity") +
+  ggtitle("Original distribution") +
+  theme_classic()
+h2 <- ggplot(missForest_imputed, aes(x = imputed_missForest)) +
+  geom_histogram(fill = "#BEB", color = "#000000",position = "identity") + ggtitle("missForest-imputed distribution") + theme_classic()
+
+plot_grid(h1, h2, nrow = 2, ncol = 2)
+
+# Log transform the 'Fare' variable
+titanic_train$Log_Fare <- log(titanic_train$Fare + 1)  #  Adding 1 to avoid log(0)
+
+# Create a scatter plot of the log-transformed 'Fare' 
+variable
+ggplot(titanic_train, aes(x = 1:nrow(titanic_train), y = Log_Fare)) +geom_point() + scale_y_continuous(trans = 'log') + ggtitle('Scatter Plot of Log-Transformed Fare') + xlab('Index') + ylab('Log(Fare + 1)') + theme_minimal()
+
+# Create a static EDA report
+eda_paged_report(churn)
+# Create a dynamic EDA report
+eda_web_report(churn)
+
+
+# Load necessary packages
+library(tidyverse)
+library(caret)
+library(mice)
+library(titanic)
+
+# Load the Titanic dataset
+data("titanic_train")
+
+# Rename
+titanic_train <- titanic_train %>%
+  rename(Gender = Sex)
+
+
+# Handle missing values
+titanic_train$Age[is.na(titanic_train$Age)] <-median(titanic_train$Age, na.rm = TRUE)
+
+# Log transform the 'Fare' variable
+titanic_train$Log_Fare <- log(titanic_train$Fare + 1)
+
+# Normalize 'Fare' variable
+process <- preProcess(as.data.frame(titanic_train$Fare), method = c("range"))
+titanic_train$Norm_Fare <- predict(process, as.data.frame(titanic_train$Fare))
+
+# Encode 'Gender' as a binary variable
+titanic_train$Gender_Encode <- ifelse(titanic_train$Gender  == "male", 1, 0)
+
+# encoding for categorical variables
+new_dat <- data.frame(titanic_train$Fare,titanic_train$Gender, titanic_train$Embarked)
+dmy <- dummyVars(" ~ .", data = new_dat, fullRank = TRUE)
+dat_transformed <- data.frame(predict(dmy, newdata =new_dat))
+
+# Binning 'Fare' into categories
+bins <- c(-Inf, 7.91, 31.00, Inf)
+bin_names <- c("Low", "Mid50", "High")
+new_dat$new_Fare <- cut(new_dat$titanic_train.Fare, breaks = bins, labels = bin_names)
+
+# Display the updated dataset
+summary(titanic_train)
+summary(dat_transformed)
+summary(new_dat$new_Fare)
+
+# Check current working directory
+getwd()
+# Set the working directory to where your .Rmd file is    
+located
+setwd("C:/Users/Admin/Documents/week 4")
+# Verify the file exists in the directory
+list.files()
+
+install.packages('tinytex')
+tinytex::install_tinytex()
+tinytex:::is_tinytex()  # Should return TRUE
+
+# Render the R Markdown file to PDF
+rmarkdown::render("data_preprocessing_report.Rmd",output_format = "pdf_document")
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
